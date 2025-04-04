@@ -10,11 +10,119 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+model User {
+    id                String   @id @default(cuid())
+    first_name        String
+    last_name         String
+    phone             String?
+    address           String
+    email             String   @unique
+    dni               String   @unique
+    password          String
+    registration_date DateTime @default(now())
 
-    @@index([name])
+    incendents Incendent[]
+
+    groups        GroupUser[]
+    groupMessages GroupMessage[]
+
+    contactsFrom    Contacts[]       @relation("from")
+    contactsTo      Contacts[]       @relation("to")
+    contactMessages ContactMessage[]
+    alert           Alert[]
+}
+
+model Incendent {
+    id            String  @id @default(cuid())
+    user_id       String
+    incident_type String
+    description   String
+    location_lat  Float
+    location_lon  Float
+    multimedia    String?
+
+    createad_at DateTime @default(now())
+    happend_at  DateTime
+
+    user User @relation(fields: [user_id], references: [id])
+}
+
+model Contacts {
+    id         String   @id @default(cuid())
+    from_id    String
+    to_id      String
+    created_at DateTime @default(now())
+
+    from           User             @relation(fields: [from_id], references: [id], name: "from")
+    to             User             @relation(fields: [to_id], references: [id], name: "to")
+    ContactMessage ContactMessage[]
+
+    @@unique([from_id, to_id])
+}
+
+model ContactMessage {
+    id         String   @id @default(cuid())
+    user_id    String
+    contact_id String
+    content    String
+    created_at DateTime @default(now())
+    type       String
+
+    user    User     @relation(fields: [user_id], references: [id])
+    contact Contacts @relation(fields: [contact_id], references: [id])
+}
+
+model Group {
+    id            String   @id @default(cuid())
+    name          String
+    description   String?
+    creation_date DateTime @default(now())
+    code          String   @unique
+
+    users    GroupUser[]
+    messages GroupMessage[]
+}
+
+model GroupUser {
+    user_id   String
+    group_id  String
+    join_date DateTime @default(now())
+    user      User     @relation(fields: [user_id], references: [id])
+    group     Group    @relation(fields: [group_id], references: [id])
+
+    @@id([user_id, group_id])
+}
+
+model GroupMessage {
+    id         String   @id @default(cuid())
+    group_id   String
+    user_id    String
+    content    String
+    created_at DateTime @default(now())
+
+    type String
+
+    user  User  @relation(fields: [user_id], references: [id])
+    group Group @relation(fields: [group_id], references: [id])
+}
+
+model News {
+    id       String @id @default(cuid())
+    title    String
+    content  String
+    image    String
+    category String
+
+    date DateTime @default(now())
+}
+
+model Alert {
+    id           String   @id @default(cuid())
+    user_id      String
+    location_lat Float
+    location_lon Float
+    active       Boolean  @default(true)
+    triggered_at DateTime @default(now())
+
+    user User @relation(fields: [user_id], references: [id])
 }
