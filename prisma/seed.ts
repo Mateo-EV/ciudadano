@@ -11,7 +11,6 @@ async function main() {
       first_name: faker.person.firstName(),
       last_name: faker.person.lastName(),
       phone: faker.phone.number(),
-      address: faker.location.streetAddress(),
       email: "riojamatthew@gmail.com",
       dni: faker.string.numeric(8),
       password: password,
@@ -25,7 +24,6 @@ async function main() {
           first_name: faker.person.firstName(),
           last_name: faker.person.lastName(),
           phone: faker.phone.number(),
-          address: faker.location.streetAddress(),
           email: faker.internet.email(),
           dni: faker.string.numeric(8),
           password: password,
@@ -50,7 +48,7 @@ async function main() {
 
   // Crear mensajes entre contactos
   await Promise.all(
-    contactRelations.map((contact, i) =>
+    contactRelations.map((contact) =>
       db.contactMessage.create({
         data: {
           user_id: firstUser.id,
