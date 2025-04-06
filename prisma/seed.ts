@@ -8,12 +8,13 @@ async function main() {
 
   const firstUser = await db.user.create({
     data: {
-      first_name: faker.person.firstName(),
-      last_name: faker.person.lastName(),
+      first_name: "Mateo",
+      last_name: "Rioja",
       phone: faker.phone.number(),
-      email: "riojamatthew@gmail.com",
+      email: "losciudadanosproyect@gmail.com",
       dni: faker.string.numeric(8),
       password: password,
+      email_verified: true,
     },
   });
 
@@ -27,6 +28,7 @@ async function main() {
           email: faker.internet.email(),
           dni: faker.string.numeric(8),
           password: password,
+          email_verified: true,
         },
       }),
     ),
