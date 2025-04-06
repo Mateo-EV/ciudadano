@@ -13,7 +13,7 @@ import { compare, hash } from "@/lib/bcrypt";
 import { sendVerificationEmail } from "../utils";
 import verifyEmailSchema from "../schemas/verify-email-schema";
 
-export const incidentsRouter = new Hono()
+export const authRouter = new Hono()
   .post("/login", zValidator("json", loginSchema), async (c) => {
     const { email, password } = c.req.valid("json");
 
@@ -25,7 +25,7 @@ export const incidentsRouter = new Hono()
     if (!user)
       throw new HTTPException(400, { message: "Incorrect email or password" });
 
-    const isValidPassword = await compare(user.password, password);
+    const isValidPassword = await compare(password, user.password);
 
     if (!isValidPassword)
       throw new HTTPException(400, { message: "Incorrect email or password" });
@@ -79,7 +79,7 @@ export const incidentsRouter = new Hono()
     });
 
     // Send email verification
-    c.executionCtx.waitUntil(sendVerificationEmail(email, newUser.id));
+    void sendVerificationEmail(email, newUser.id);
 
     return c.json({
       message: "User registered successfully",
@@ -109,12 +109,39 @@ export const incidentsRouter = new Hono()
       return c.json({ message: "Email already verified" });
     }
 
-    const isCodeValid = await db.verificationCode.findUnique({
+    const verificationCode = await db.verificationCode.findUnique({
       where: { user_id: user.id },
-      select: { code: true },
+      select: { code: true, expires_at: true, tries: true },
     });
 
-    if (!isCodeValid || isCodeValid.code !== code) {
+    if (!verificationCode) {
+      throw new HTTPException(400, { message: "Invalid email or code" });
+    }
+
+    if (verificationCode.expires_at < new Date()) {
+      await db.verificationCode.delete({
+        where: { user_id: user.id },
+      });
+
+      throw new HTTPException(400, { message: "Code expired" });
+    }
+
+    if (verificationCode.tries >= 3) {
+      await db.verificationCode.delete({
+        where: { user_id: user.id },
+      });
+
+      throw new HTTPException(400, { message: "Code expired" });
+    }
+
+    const isCodeValid = await compare(code, verificationCode.code);
+
+    if (!isCodeValid) {
+      await db.verificationCode.update({
+        data: { tries: { increment: 1 } },
+        where: { user_id: user.id },
+      });
+
       throw new HTTPException(400, { message: "Invalid email or code" });
     }
 
