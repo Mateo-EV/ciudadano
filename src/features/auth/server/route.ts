@@ -12,6 +12,7 @@ import registerSchema from "../schemas/register-schema";
 import { compare, hash } from "@/lib/bcrypt";
 import { sendVerificationEmail } from "../utils";
 import verifyEmailSchema from "../schemas/verify-email-schema";
+import resendEmailVerificationCode from "../schemas/resend-email-verification-code";
 
 export const authRouter = new Hono()
   .post("/login", zValidator("json", loginSchema), async (c) => {
@@ -151,4 +152,24 @@ export const authRouter = new Hono()
     });
 
     return c.json({ message: "Email verified successfully" });
-  });
+  })
+  .post(
+    "/resend-email-verification-code",
+    zValidator("json", resendEmailVerificationCode),
+    async (c) => {
+      const { email } = c.req.valid("json");
+
+      const user = await db.user.findUnique({
+        where: { email },
+        select: { id: true, email_verified: true },
+      });
+
+      if (!user || user.email_verified) {
+        throw new HTTPException(400, { message: "Invalid email" });
+      }
+
+      await sendVerificationEmail(email, user.id);
+
+      return c.json({ message: "Verification email resent successfully" });
+    },
+  );
