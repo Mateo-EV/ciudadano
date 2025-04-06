@@ -11,15 +11,18 @@ datasource db {
 }
 
 model User {
-    id                String   @id @default(cuid())
-    first_name        String
-    last_name         String
-    phone             String?
-    address           String
-    email             String   @unique
-    dni               String   @unique
-    password          String
-    registration_date DateTime @default(now())
+    id             String   @id @default(cuid())
+    first_name     String
+    last_name      String
+    phone          String?
+    email          String   @unique
+    email_verified Boolean  @default(false)
+    dni            String   @unique
+    password       String
+    created_at     DateTime @default(now())
+
+    verificationCode   VerificationCode?
+    passwordResetToken PasswordResetToken?
 
     incendents Incendent[]
 
@@ -30,6 +33,27 @@ model User {
     contactsTo      Contacts[]       @relation("to")
     contactMessages ContactMessage[]
     alert           Alert[]
+}
+
+model VerificationCode {
+    id         Int      @id @default(autoincrement())
+    user_id    String   @unique
+    code       String
+    created_at DateTime @default(now())
+    expires_at DateTime
+    tries      Int      @default(0)
+
+    user User @relation(fields: [user_id], references: [id])
+}
+
+model PasswordResetToken {
+    id         Int      @id @default(autoincrement())
+    user_id    String   @unique
+    token      String
+    created_at DateTime @default(now())
+    expires_at DateTime
+
+    user User @relation(fields: [user_id], references: [id])
 }
 
 model Incendent {
