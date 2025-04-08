@@ -21,8 +21,8 @@ model User {
     password       String
     created_at     DateTime @default(now())
 
-    verificationCode   VerificationCode?
-    passwordResetToken PasswordResetToken?
+    verificationCode  VerificationCode?
+    passwordResetCode PasswordResetCode?
 
     incendents Incendent[]
 
@@ -46,12 +46,13 @@ model VerificationCode {
     user User @relation(fields: [user_id], references: [id])
 }
 
-model PasswordResetToken {
+model PasswordResetCode {
     id         Int      @id @default(autoincrement())
     user_id    String   @unique
-    token      String
+    code       String
     created_at DateTime @default(now())
     expires_at DateTime
+    tries      Int      @default(0)
 
     user User @relation(fields: [user_id], references: [id])
 }

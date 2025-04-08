@@ -10,9 +10,11 @@ import { setCookie } from "hono/cookie";
 import AUTH_COOKIE from "../constants/auth_cookie";
 import registerSchema from "../schemas/register-schema";
 import { compare, hash } from "@/lib/bcrypt";
-import { sendVerificationEmail } from "../utils";
+import { sendResetPasswordEmail, sendVerificationEmail } from "../utils";
 import verifyEmailSchema from "../schemas/verify-email-schema";
 import resendEmailVerificationCode from "../schemas/resend-email-verification-code";
+import resetPasswordSchema from "../schemas/reset-password-schema";
+import sendResetPasswordSchema from "../schemas/send-reset-password-email-schema";
 
 export const authRouter = new Hono()
   .post("/login", zValidator("json", loginSchema), async (c) => {
@@ -171,5 +173,89 @@ export const authRouter = new Hono()
       await sendVerificationEmail(email, user.id);
 
       return c.json({ message: "Verification email resent successfully" });
+    },
+  )
+  .post(
+    "/send-reset-password-email",
+    zValidator("json", sendResetPasswordSchema),
+    async (c) => {
+      const { email } = c.req.valid("json");
+
+      const user = await db.user.findUnique({
+        where: { email },
+        select: { id: true, email_verified: true },
+      });
+
+      if (!user) {
+        throw new HTTPException(400, { message: "Invalid email" });
+      }
+
+      await sendResetPasswordEmail(email, user.id);
+
+      return c.json({ message: "Password reset email sent successfully" });
+    },
+  )
+  .put(
+    "/reset-password",
+    zValidator("json", resetPasswordSchema),
+    async (c) => {
+      const { code, email, password: newPassword } = c.req.valid("json");
+
+      const user = await db.user.findUnique({
+        where: { email },
+        select: { id: true },
+      });
+
+      if (!user) {
+        throw new HTTPException(400, { message: "Invalid email or code" });
+      }
+
+      const resetCode = await db.passwordResetCode.findUnique({
+        where: { user_id: user.id },
+        select: { code: true, expires_at: true, tries: true },
+      });
+
+      if (!resetCode) {
+        throw new HTTPException(400, { message: "Invalid email or code" });
+      }
+
+      if (resetCode.expires_at < new Date()) {
+        await db.passwordResetCode.delete({
+          where: { user_id: user.id },
+        });
+
+        throw new HTTPException(400, { message: "Code expired" });
+      }
+
+      if (resetCode.tries >= 3) {
+        await db.passwordResetCode.delete({
+          where: { user_id: user.id },
+        });
+
+        throw new HTTPException(400, { message: "Code expired" });
+      }
+
+      const isCodeValid = await compare(code, resetCode.code);
+
+      if (!isCodeValid) {
+        await db.passwordResetCode.update({
+          data: { tries: { increment: 1 } },
+          where: { user_id: user.id },
+        });
+
+        throw new HTTPException(400, { message: "Invalid email or code" });
+      }
+
+      const hashedPassword = await hash(newPassword);
+
+      await db.user.update({
+        where: { id: user.id },
+        data: {
+          password: hashedPassword,
+          passwordResetCode: { delete: {} },
+        },
+      });
+
+      return c.json({ message: "Password reset successfully" });
     },
   );
