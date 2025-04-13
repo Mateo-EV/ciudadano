@@ -1,20 +1,24 @@
 import { env } from "@/env";
+import {
+  sendResetPasswordEmail,
+  sendVerificationEmail,
+} from "@/features/auth/utils/mail";
+import { compare, hash } from "@/lib/bcrypt";
 import { db } from "@/server/db";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
+import { setCookie } from "hono/cookie";
 import { HTTPException } from "hono/http-exception";
 import { sign } from "hono/jwt";
+import AUTH_COOKIE from "../constants/auth_cookie";
 import EXTRA_EXP_TIME from "../constants/extra_exp_time";
 import loginSchema from "../schemas/login-schema";
-import { setCookie } from "hono/cookie";
-import AUTH_COOKIE from "../constants/auth_cookie";
 import registerSchema from "../schemas/register-schema";
-import { compare, hash } from "@/lib/bcrypt";
-import { sendResetPasswordEmail, sendVerificationEmail } from "../utils";
-import verifyEmailSchema from "../schemas/verify-email-schema";
 import resendEmailVerificationCode from "../schemas/resend-email-verification-code";
 import resetPasswordSchema from "../schemas/reset-password-schema";
 import sendResetPasswordSchema from "../schemas/send-reset-password-email-schema";
+import verifyEmailSchema from "../schemas/verify-email-schema";
+import authMiddleware from "./middleware/authMiddleware";
 
 export const authRouter = new Hono()
   .post("/login", zValidator("json", loginSchema), async (c) => {
@@ -258,4 +262,11 @@ export const authRouter = new Hono()
 
       return c.json({ message: "Password reset successfully" });
     },
-  );
+  )
+  .get("/profile", authMiddleware, async (c) => {
+    return c.json({
+      data: {
+        user: c.get("user"),
+      },
+    });
+  });

@@ -1,9 +1,9 @@
 import resend from "@/lib/resend";
-import VerificationEmail from "./components/mail/verification-email";
+import VerificationEmail from "../components/mail/verification-email";
 import { db } from "@/server/db";
 import { hash } from "@/lib/bcrypt";
-import PasswordResetEmail from "./components/mail/password-reset-email";
-import SEND_EMAIL_INTERVAL_MS from "./constants/send_email_interval";
+import PasswordResetEmail from "../components/mail/password-reset-email";
+import SEND_EMAIL_INTERVAL_MS from "../constants/send_email_interval";
 import { HTTPException } from "hono/http-exception";
 
 export async function sendVerificationEmail(email: string, userId: string) {
