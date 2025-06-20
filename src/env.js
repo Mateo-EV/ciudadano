@@ -13,6 +13,10 @@ export const env = createEnv({
       .default("development"),
     JWT_SECRET_KEY: z.string(),
     RESEND_API_KEY: z.string(),
+    AWS_ACCESS_KEY: z.string(),
+    AWS_SECRET_KEY: z.string(),
+    AWS_BUCKET_NAME: z.string(),
+    AWS_REGION: z.string().default("us-east-1"),
   },
 
   /**
@@ -35,6 +39,10 @@ export const env = createEnv({
     JWT_SECRET_KEY: process.env.JWT_SECRET_KEY,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     NEXT_PUBLIC_URL: process.env.NEXT_PUBLIC_URL,
+    AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY,
+    AWS_SECRET_KEY: process.env.AWS_SECRET_KEY,
+    AWS_BUCKET_NAME: process.env.AWS_BUCKET_NAME,
+    AWS_REGION: process.env.AWS_REGION,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**

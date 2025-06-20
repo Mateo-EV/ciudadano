@@ -22,6 +22,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.832.0",
     "@faker-js/faker": "^9.6.0",
     "@hono/zod-validator": "^0.4.3",
     "@prisma/client": "^6.5.0",
@@ -32,7 +33,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "resend": "^4.2.0",
-    "zod": "^3.24.2"
+    "zod": "^3.25.67"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",

@@ -24,7 +24,7 @@ model User {
     verificationCode  VerificationCode?
     passwordResetCode PasswordResetCode?
 
-    incendents Incendent[]
+    incidents Incident[]
 
     groups        GroupUser[]
     groupMessages GroupMessage[]
@@ -57,7 +57,7 @@ model PasswordResetCode {
     user User @relation(fields: [user_id], references: [id])
 }
 
-model Incendent {
+model Incident {
     id            String  @id @default(cuid())
     user_id       String
     incident_type String
@@ -66,8 +66,8 @@ model Incendent {
     location_lon  Float
     multimedia    String?
 
-    createad_at DateTime @default(now())
-    happend_at  DateTime
+    created_at DateTime @default(now())
+    happend_at DateTime
 
     user User @relation(fields: [user_id], references: [id])
 }
@@ -125,21 +125,23 @@ model GroupMessage {
     content    String
     created_at DateTime @default(now())
 
-    type String
-
     user  User  @relation(fields: [user_id], references: [id])
     group Group @relation(fields: [group_id], references: [id])
 }
 
-model News {
-    id       String @id @default(cuid())
-    title    String
-    content  String
-    image    String
-    category String
+// enum NewsCategory {
 
-    date DateTime @default(now())
-}
+// }
+
+// model News {
+//     id       String @id @default(cuid())
+//     title    String
+//     content  String
+//     image    String
+//     category String
+
+//     date DateTime @default(now())
+// }
 
 model Alert {
     id           String   @id @default(cuid())

@@ -110,31 +110,31 @@ async function main() {
           user_id: user.id,
           group_id: group1.id,
           content: faker.lorem.sentence(),
-          type: "info",
+          // type: "info",
         },
       }),
     ),
   );
 
   // Crear incidentes aleatorios
-  await Promise.all(
-    users.map((user) =>
-      db.incendent.create({
-        data: {
-          user_id: user.id,
-          incident_type: faker.helpers.arrayElement([
-            "Robo",
-            "Asalto",
-            "Vandalismo",
-          ]),
-          description: faker.lorem.sentences(2),
-          location_lat: faker.location.latitude({ max: -14.05, min: -14.07 }),
-          location_lon: faker.location.longitude({ max: -14.05, min: -14.07 }),
-          happend_at: faker.date.recent({ days: 10 }),
-        },
-      }),
-    ),
-  );
+  // await Promise.all(
+  //   users.map((user) =>
+  //     db.incident.create({
+  //       data: {
+  //         user_id: user.id,
+  //         incident_type: faker.helpers.arrayElement([
+  //           "Robo",
+  //           "Asalto",
+  //           "Vandalismo",
+  //         ]),
+  //         description: faker.lorem.sentences(2),
+  //         location_lat: faker.location.latitude({ max: -14.05, min: -14.07 }),
+  //         location_lon: faker.location.longitude({ max: -14.05, min: -14.07 }),
+  //         happend_at: faker.date.recent({ days: 10 }),
+  //       },
+  //     }),
+  //   ),
+  // );
 
   // Crear alertas activas
   await Promise.all(
@@ -150,22 +150,22 @@ async function main() {
   );
 
   // Crear 5 noticias
-  await Promise.all(
-    Array.from({ length: 5 }).map(() =>
-      db.news.create({
-        data: {
-          title: faker.lorem.words(5),
-          content: faker.lorem.paragraph(),
-          image: faker.image.url(),
-          category: faker.helpers.arrayElement([
-            "Seguridad",
-            "Comunidad",
-            "Prevención",
-          ]),
-        },
-      }),
-    ),
-  );
+  // await Promise.all(
+  //   Array.from({ length: 5 }).map(() =>
+  //     db.news.create({
+  //       data: {
+  //         title: faker.lorem.words(5),
+  //         content: faker.lorem.paragraph(),
+  //         image: faker.image.url(),
+  //         category: faker.helpers.arrayElement([
+  //           "Seguridad",
+  //           "Comunidad",
+  //           "Prevención",
+  //         ]),
+  //       },
+  //     }),
+  //   ),
+  // );
 }
 
 main()

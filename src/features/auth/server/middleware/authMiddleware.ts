@@ -53,6 +53,7 @@ const authMiddleware = createMiddleware<AdditionalSessionMiddlewareContext>(
           last_name: true,
           dni: true,
           email_verified: true,
+          created_at: true,
         },
       });
 

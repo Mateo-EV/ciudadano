@@ -19,6 +19,7 @@ import resetPasswordSchema from "../schemas/reset-password-schema";
 import sendResetPasswordSchema from "../schemas/send-reset-password-email-schema";
 import verifyEmailSchema from "../schemas/verify-email-schema";
 import authMiddleware from "./middleware/authMiddleware";
+import { updateProfileSchema } from "../schemas/update-profile-schema";
 
 export const authRouter = new Hono()
   .post("/login", zValidator("json", loginSchema), async (c) => {
@@ -268,5 +269,47 @@ export const authRouter = new Hono()
       data: {
         user: c.get("user"),
       },
+    });
+  })
+  .put(
+    "/profile",
+    authMiddleware,
+    zValidator("json", updateProfileSchema),
+    async (c) => {
+      const updatedUserData = c.req.valid("json");
+
+      const user = await db.user.update({
+        where: { id: c.get("user").id },
+        data: updatedUserData,
+      });
+
+      return c.json({
+        message: "Profile updated successfully",
+        data: { user },
+      });
+    },
+  )
+  .get("/profile/:id", authMiddleware, async (c) => {
+    const userId = c.req.param("id");
+
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        first_name: true,
+        last_name: true,
+        email: true,
+        dni: true,
+        phone: true,
+        email_verified: true,
+      },
+    });
+
+    if (!user) {
+      throw new HTTPException(404, { message: "User not found" });
+    }
+
+    return c.json({
+      data: { user },
     });
   });
