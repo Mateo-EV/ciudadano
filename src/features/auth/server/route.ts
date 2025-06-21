@@ -5,7 +5,6 @@ import {
 } from "@/features/auth/utils/mail";
 import { compare, hash } from "@/lib/bcrypt";
 import { db } from "@/server/db";
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { setCookie } from "hono/cookie";
 import { HTTPException } from "hono/http-exception";
@@ -20,148 +19,248 @@ import sendResetPasswordSchema from "../schemas/send-reset-password-email-schema
 import verifyEmailSchema from "../schemas/verify-email-schema";
 import authMiddleware from "./middleware/authMiddleware";
 import { updateProfileSchema } from "../schemas/update-profile-schema";
+import { describeRoute } from "hono-openapi";
+import { validator as zValidator } from "hono-openapi/zod";
 
 export const authRouter = new Hono()
-  .post("/login", zValidator("json", loginSchema), async (c) => {
-    const { email, password } = c.req.valid("json");
-
-    const user = await db.user.findUnique({
-      where: { email },
-      select: { id: true, password: true, email_verified: true },
-    });
-
-    if (!user)
-      throw new HTTPException(400, { message: "Incorrect email or password" });
-
-    const isValidPassword = await compare(password, user.password);
-
-    if (!isValidPassword)
-      throw new HTTPException(400, { message: "Incorrect email or password" });
-
-    const now = Math.floor(Date.now() / 1000);
-    const token = await sign(
-      {
-        sub: user.id,
-        iat: now,
-        nbf: now,
-        exp: now + EXTRA_EXP_TIME,
-      },
-      env.JWT_SECRET_KEY,
-    );
-
-    setCookie(c, AUTH_COOKIE, token, {
-      path: "/",
-      httpOnly: true,
-      secure: env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: EXTRA_EXP_TIME,
-    });
-
-    return c.json({
-      message: "Login successful",
-      data: { token, isEmailVerified: user.email_verified },
-    });
-  })
-  .post("/register", zValidator("json", registerSchema), async (c) => {
-    const { email, password, firstName, lastName, dni } = c.req.valid("json");
-
-    const existingUser = await db.user.findUnique({
-      where: { email },
-      select: { id: true },
-    });
-
-    if (existingUser) {
-      throw new HTTPException(400, { message: "Email already registered" });
-    }
-
-    const hashedPassword = await hash(password);
-
-    const newUser = await db.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        first_name: firstName,
-        last_name: lastName,
-        dni,
-      },
-    });
-
-    // Send email verification
-    void sendVerificationEmail(email, newUser.id);
-
-    return c.json({
-      message: "User registered successfully",
-      data: {
-        user: {
-          firstName: newUser.first_name,
-          lastName: newUser.last_name,
-          dni: newUser.dni,
-          email: newUser.email,
+  .post(
+    "/login",
+    describeRoute({
+      summary: "Login user",
+      responses: {
+        200: {
+          description: "Login successful",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  message: { type: "string" },
+                  data: {
+                    type: "object",
+                    properties: {
+                      token: { type: "string" },
+                      isEmailVerified: { type: "boolean" },
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
+        400: { description: "Incorrect email or password" },
       },
-    });
-  })
-  .post("/verify-email", zValidator("json", verifyEmailSchema), async (c) => {
-    const { email, code } = c.req.valid("json");
+      tags: ["Auth"],
+      security: [],
+    }),
+    zValidator("json", loginSchema),
+    async (c) => {
+      const { email, password } = c.req.valid("json");
 
-    const user = await db.user.findUnique({
-      where: { email },
-      select: { id: true, email_verified: true },
-    });
-
-    if (!user) {
-      throw new HTTPException(400, { message: "Invalid email or code" });
-    }
-
-    if (user.email_verified) {
-      return c.json({ message: "Email already verified" });
-    }
-
-    const verificationCode = await db.verificationCode.findUnique({
-      where: { user_id: user.id },
-      select: { code: true, expires_at: true, tries: true },
-    });
-
-    if (!verificationCode) {
-      throw new HTTPException(400, { message: "Invalid email or code" });
-    }
-
-    if (verificationCode.expires_at < new Date()) {
-      await db.verificationCode.delete({
-        where: { user_id: user.id },
+      const user = await db.user.findUnique({
+        where: { email },
+        select: { id: true, password: true, email_verified: true },
       });
 
-      throw new HTTPException(400, { message: "Code expired" });
-    }
+      if (!user)
+        throw new HTTPException(400, {
+          message: "Incorrect email or password",
+        });
 
-    if (verificationCode.tries >= 3) {
-      await db.verificationCode.delete({
-        where: { user_id: user.id },
+      const isValidPassword = await compare(password, user.password);
+
+      if (!isValidPassword)
+        throw new HTTPException(400, {
+          message: "Incorrect email or password",
+        });
+
+      const now = Math.floor(Date.now() / 1000);
+      const token = await sign(
+        {
+          sub: user.id,
+          iat: now,
+          nbf: now,
+          exp: now + EXTRA_EXP_TIME,
+        },
+        env.JWT_SECRET_KEY,
+      );
+
+      setCookie(c, AUTH_COOKIE, token, {
+        path: "/",
+        httpOnly: true,
+        secure: env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: EXTRA_EXP_TIME,
       });
 
-      throw new HTTPException(400, { message: "Code expired" });
-    }
+      return c.json({
+        message: "Login successful",
+        data: { token, isEmailVerified: user.email_verified },
+      });
+    },
+  )
+  .post(
+    "/register",
+    describeRoute({
+      summary: "Register user",
+      responses: {
+        200: {
+          description: "User registered successfully",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  message: { type: "string" },
+                  data: {
+                    type: "object",
+                    properties: {
+                      user: {
+                        type: "object",
+                        properties: {
+                          firstName: { type: "string" },
+                          lastName: { type: "string" },
+                          dni: { type: "string" },
+                          email: { type: "string" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        400: { description: "Email already registered" },
+      },
 
-    const isCodeValid = await compare(code, verificationCode.code);
+      security: [],
+      tags: ["Auth"],
+    }),
+    zValidator("json", registerSchema),
+    async (c) => {
+      const { email, password, firstName, lastName, dni } = c.req.valid("json");
 
-    if (!isCodeValid) {
-      await db.verificationCode.update({
-        data: { tries: { increment: 1 } },
-        where: { user_id: user.id },
+      const existingUser = await db.user.findUnique({
+        where: { email },
+        select: { id: true },
       });
 
-      throw new HTTPException(400, { message: "Invalid email or code" });
-    }
+      if (existingUser) {
+        throw new HTTPException(400, { message: "Email already registered" });
+      }
 
-    await db.user.update({
-      where: { id: user.id },
-      data: { email_verified: true, verificationCode: { delete: {} } },
-    });
+      const hashedPassword = await hash(password);
 
-    return c.json({ message: "Email verified successfully" });
-  })
+      const newUser = await db.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          first_name: firstName,
+          last_name: lastName,
+          dni,
+        },
+      });
+
+      // Send email verification
+      void sendVerificationEmail(email, newUser.id);
+
+      return c.json({
+        message: "User registered successfully",
+        data: {
+          user: {
+            firstName: newUser.first_name,
+            lastName: newUser.last_name,
+            dni: newUser.dni,
+            email: newUser.email,
+          },
+        },
+      });
+    },
+  )
+  .post(
+    "/verify-email",
+    describeRoute({
+      summary: "Verify email",
+      responses: {
+        200: { description: "Email verified successfully" },
+        400: { description: "Invalid email or code" },
+      },
+      security: [],
+      tags: ["Auth"],
+    }),
+    zValidator("json", verifyEmailSchema),
+    async (c) => {
+      const { email, code } = c.req.valid("json");
+
+      const user = await db.user.findUnique({
+        where: { email },
+        select: { id: true, email_verified: true },
+      });
+
+      if (!user) {
+        throw new HTTPException(400, { message: "Invalid email or code" });
+      }
+
+      if (user.email_verified) {
+        return c.json({ message: "Email already verified" });
+      }
+
+      const verificationCode = await db.verificationCode.findUnique({
+        where: { user_id: user.id },
+        select: { code: true, expires_at: true, tries: true },
+      });
+
+      if (!verificationCode) {
+        throw new HTTPException(400, { message: "Invalid email or code" });
+      }
+
+      if (verificationCode.expires_at < new Date()) {
+        await db.verificationCode.delete({
+          where: { user_id: user.id },
+        });
+
+        throw new HTTPException(400, { message: "Code expired" });
+      }
+
+      if (verificationCode.tries >= 3) {
+        await db.verificationCode.delete({
+          where: { user_id: user.id },
+        });
+
+        throw new HTTPException(400, { message: "Code expired" });
+      }
+
+      const isCodeValid = await compare(code, verificationCode.code);
+
+      if (!isCodeValid) {
+        await db.verificationCode.update({
+          data: { tries: { increment: 1 } },
+          where: { user_id: user.id },
+        });
+
+        throw new HTTPException(400, { message: "Invalid email or code" });
+      }
+
+      await db.user.update({
+        where: { id: user.id },
+        data: { email_verified: true, verificationCode: { delete: {} } },
+      });
+
+      return c.json({ message: "Email verified successfully" });
+    },
+  )
   .post(
     "/resend-email-verification-code",
+    describeRoute({
+      summary: "Resend email verification code",
+      responses: {
+        200: { description: "Verification email resent successfully" },
+        400: { description: "Invalid email" },
+      },
+      security: [],
+      tags: ["Auth"],
+    }),
     zValidator("json", resendEmailVerificationCode),
     async (c) => {
       const { email } = c.req.valid("json");
@@ -182,6 +281,15 @@ export const authRouter = new Hono()
   )
   .post(
     "/send-reset-password-email",
+    describeRoute({
+      summary: "Send reset password email",
+      responses: {
+        200: { description: "Password reset email sent successfully" },
+        400: { description: "Invalid email" },
+      },
+      security: [],
+      tags: ["Auth"],
+    }),
     zValidator("json", sendResetPasswordSchema),
     async (c) => {
       const { email } = c.req.valid("json");
@@ -202,6 +310,15 @@ export const authRouter = new Hono()
   )
   .put(
     "/reset-password",
+    describeRoute({
+      summary: "Reset password",
+      responses: {
+        200: { description: "Password reset successfully" },
+        400: { description: "Invalid email or code" },
+      },
+      security: [],
+      tags: ["Auth"],
+    }),
     zValidator("json", resetPasswordSchema),
     async (c) => {
       const { code, email, password: newPassword } = c.req.valid("json");
@@ -264,15 +381,68 @@ export const authRouter = new Hono()
       return c.json({ message: "Password reset successfully" });
     },
   )
-  .get("/profile", authMiddleware, async (c) => {
-    return c.json({
-      data: {
-        user: c.get("user"),
+  .get(
+    "/profile",
+    describeRoute({
+      summary: "Get user profile",
+      responses: {
+        200: {
+          description: "User profile",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  data: {
+                    type: "object",
+                    properties: {
+                      user: { type: "object" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
-    });
-  })
+      tags: ["Auth"],
+    }),
+    authMiddleware,
+    async (c) => {
+      return c.json({
+        data: {
+          user: c.get("user"),
+        },
+      });
+    },
+  )
   .put(
     "/profile",
+    describeRoute({
+      summary: "Update user profile",
+      responses: {
+        200: {
+          description: "Profile updated successfully",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  message: { type: "string" },
+                  data: {
+                    type: "object",
+                    properties: {
+                      user: { type: "object" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      tags: ["Auth"],
+    }),
     authMiddleware,
     zValidator("json", updateProfileSchema),
     async (c) => {
@@ -289,27 +459,64 @@ export const authRouter = new Hono()
       });
     },
   )
-  .get("/profile/:id", authMiddleware, async (c) => {
-    const userId = c.req.param("id");
-
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        first_name: true,
-        last_name: true,
-        email: true,
-        dni: true,
-        phone: true,
-        email_verified: true,
+  .get(
+    "/profile/:id",
+    describeRoute({
+      summary: "Get user profile by id",
+      parameters: [
+        {
+          name: "id",
+          in: "path",
+          required: true,
+          schema: { type: "string" },
+        },
+      ],
+      responses: {
+        200: {
+          description: "User profile",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  data: {
+                    type: "object",
+                    properties: {
+                      user: { type: "object" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        404: { description: "User not found" },
       },
-    });
+      tags: ["Auth"],
+    }),
+    authMiddleware,
+    async (c) => {
+      const userId = c.req.param("id");
 
-    if (!user) {
-      throw new HTTPException(404, { message: "User not found" });
-    }
+      const user = await db.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          first_name: true,
+          last_name: true,
+          email: true,
+          dni: true,
+          phone: true,
+          email_verified: true,
+        },
+      });
 
-    return c.json({
-      data: { user },
-    });
-  });
+      if (!user) {
+        throw new HTTPException(404, { message: "User not found" });
+      }
+
+      return c.json({
+        data: { user },
+      });
+    },
+  );

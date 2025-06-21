@@ -59,11 +59,17 @@ const authMiddleware = createMiddleware<AdditionalSessionMiddlewareContext>(
 
       if (!user) throw new HTTPException(401, { message: "Unauthorized" });
 
+      if (!user.email_verified) {
+        throw new HTTPException(403, { message: "Email not verified" });
+      }
+
       c.set("user", user);
 
       await next();
     } catch (error) {
-      console.error("Error verifying token:", error);
+      if (error instanceof HTTPException) {
+        throw error;
+      }
       throw new HTTPException(401, { message: "Unauthorized" });
     }
   },
