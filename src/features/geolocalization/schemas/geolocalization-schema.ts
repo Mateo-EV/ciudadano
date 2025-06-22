@@ -8,3 +8,5 @@ export const geolocalizationSchema = z.object({
     message: "Longitude must be between -180 and 180 degrees",
   }),
 });
+
+export type Geolocalization = z.infer<typeof geolocalizationSchema>;

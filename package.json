@@ -35,6 +35,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "resend": "^4.2.0",
+    "socket.io": "^4.8.1",
     "zod": "^3.25.67",
     "zod-openapi": "^4.2.4"
   },
@@ -51,7 +52,7 @@
     "prettier-plugin-tailwindcss": "^0.6.11",
     "prisma": "^6.5.0",
     "tailwindcss": "^4.0.15",
-    "tsx": "^4.19.3",
+    "tsx": "^4.20.3",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.27.0"
   },

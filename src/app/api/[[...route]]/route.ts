@@ -39,6 +39,16 @@ app.get(
               happend_at: { type: "string", format: "date-time" },
             },
           },
+          Group: {
+            type: "object",
+            properties: {
+              id: { type: "string", format: "cuid" },
+              name: { type: "string" },
+              description: { type: "string" },
+              code: { type: "string" },
+              created_at: { type: "string", format: "date-time" },
+            },
+          },
         },
         securitySchemes: {
           bearerAuth: {
