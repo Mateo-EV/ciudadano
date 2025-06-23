@@ -8,7 +8,7 @@ import { validator as zValidator } from "hono-openapi/zod";
 import { zValidator as zValidatorForm } from "@hono/zod-validator";
 import { HTTPException } from "hono/http-exception";
 import { geolocalizationSchema } from "@/features/geolocalization/schemas/geolocalization-schema";
-import { emitIncidentCreated } from "@/features/events/utils/incidents";
+import { emitIncidentReported } from "@/features/events/utils/incidents";
 
 export const incidentsRouter = new Hono()
   .get(
@@ -129,7 +129,7 @@ export const incidentsRouter = new Hono()
         },
       });
 
-      return c.json({ data: { incidents } });
+      return c.json({ data: incidents });
     },
   )
   .post(
@@ -207,7 +207,7 @@ export const incidentsRouter = new Hono()
         },
       });
 
-      emitIncidentCreated(newIncident);
+      emitIncidentReported(newIncident);
 
       return c.json({ data: { incident: newIncident } }, 201);
     },

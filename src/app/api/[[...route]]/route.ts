@@ -5,13 +5,17 @@ import { Hono } from "hono";
 import { handle } from "hono/vercel";
 import { openAPISpecs } from "hono-openapi";
 import { env } from "@/env";
+import { chatRouter } from "@/features/chats/server/route";
+import { alertsRouter } from "@/features/alerts/server/route";
 
 const app = new Hono().basePath("/api");
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const routes = app
   .route("/auth", authRouter)
-  .route("/incidents", incidentsRouter);
+  .route("/incidents", incidentsRouter)
+  .route("/alerts", alertsRouter)
+  .route("/chats", chatRouter);
 
 app.get("/ui", swaggerUI({ url: "/api/doc" }));
 app.get(
