@@ -209,7 +209,7 @@ export const incidentsRouter = new Hono()
 
       emitIncidentReported(newIncident);
 
-      return c.json({ data: { incident: newIncident } }, 201);
+      return c.json({ data: newIncident }, 201);
     },
   )
   .delete(
