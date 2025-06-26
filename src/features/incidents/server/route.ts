@@ -133,7 +133,7 @@ export const incidentsRouter = new Hono()
     },
   )
   .post(
-    "/post",
+    "/",
     describeRoute({
       summary: "Create incident",
       requestBody: {
