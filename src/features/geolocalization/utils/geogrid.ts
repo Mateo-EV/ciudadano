@@ -28,6 +28,7 @@ export function removeUserFromGrid(user: UserLocation) {
 export function updateUserLocation(user: UserLocation) {
   removeUserFromGrid(user);
   addUserToGrid(user);
+  console.log(geoGrid);
 }
 
 function getNeighborCells(lat: number, lon: number): string[] {
@@ -52,6 +53,8 @@ export function findNearbyUsers(lat: number, lon: number): UserLocation[] {
       nearby.push(...users);
     }
   }
+  console.log(nearby);
+
   return nearby;
 }
 
