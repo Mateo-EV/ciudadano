@@ -47,7 +47,16 @@ function getNeighborCells(lat: number, lon: number): string[] {
 export function findNearbyUsers(lat: number, lon: number): UserLocation[] {
   const nearby: UserLocation[] = [];
   const cells = getNeighborCells(lat, lon);
+  const sameCell = getGeoCell(lat, lon);
+
+  if (!cells.includes(sameCell)) {
+    cells.push(sameCell);
+  }
+
+  console.log(cells);
+
   for (const cell of cells) {
+    console.log(cell);
     const users = geoGrid.get(cell);
     if (users) {
       nearby.push(...users);
