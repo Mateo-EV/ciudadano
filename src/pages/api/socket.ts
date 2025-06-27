@@ -36,7 +36,7 @@ const geolocalizationBackup = new Map<string, UserLocation>();
 const userSockets = new Map<string, string>();
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (!res.socket?.server.io) {
+  if (!res.socket!.server.io) {
     const httpServer: HTTPServer = res.socket?.server as HTTPServer;
     const io = new IOServer(httpServer, {
       path: "/api/socket",
@@ -114,6 +114,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
     global.io = io;
     global.userSockets = userSockets;
+    res.socket!.server.io = io;
 
     console.log("✅ Socket.IO server initialized");
   }
