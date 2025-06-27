@@ -6,8 +6,6 @@ export type UserLocation = {
 
 const CELL_SIZE = 0.01; // ~1.1 kilómetros
 
-const geoGrid = new Map<string, Set<UserLocation>>();
-
 function getGeoCell(lat: number, lon: number): string {
   const cellX = Math.floor(lon / CELL_SIZE);
   const cellY = Math.floor(lat / CELL_SIZE);
@@ -53,16 +51,12 @@ export function findNearbyUsers(lat: number, lon: number): UserLocation[] {
     cells.push(sameCell);
   }
 
-  console.log(cells);
-
   for (const cell of cells) {
-    console.log(cell);
     const users = geoGrid.get(cell);
     if (users) {
       nearby.push(...users);
     }
   }
-  console.log(nearby);
 
   return nearby;
 }

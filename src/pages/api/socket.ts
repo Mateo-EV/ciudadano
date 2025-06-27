@@ -24,6 +24,9 @@ declare global {
 
   // eslint-disable-next-line no-var
   var userSockets: Map<string, string>;
+
+  // eslint-disable-next-line no-var
+  var geoGrid: Map<string, Set<UserLocation>>;
 }
 
 export const config = {
@@ -34,6 +37,7 @@ export const config = {
 
 const geolocalizationBackup = new Map<string, UserLocation>();
 const userSockets = new Map<string, string>();
+const geoGrid = new Map<string, Set<UserLocation>>();
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!res.socket!.server.io) {
@@ -101,8 +105,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         }
 
         const userLoc = { ...data, userId: socket.data.userId };
-        console.log(`User ${userId} set location:`, userLoc);
-        console.log(geolocalizationBackup);
 
         geolocalizationBackup.set(socket.id, userLoc);
         updateUserLocation(userLoc);
@@ -110,6 +112,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
       socket.on("disconnect", () => {
         userSockets.delete(userId);
+
         const userLoc = geolocalizationBackup.get(socket.id);
         if (userLoc) removeUserFromGrid(userLoc);
         geolocalizationBackup.delete(socket.id);
@@ -118,9 +121,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
     global.io = io;
     global.userSockets = userSockets;
+    global.geoGrid = geoGrid;
     res.socket!.server.io = io;
-
-    console.log("✅ Socket.IO server initialized");
   }
 
   res.end();
