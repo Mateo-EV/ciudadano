@@ -40,6 +40,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     const httpServer: HTTPServer = res.socket?.server as HTTPServer;
     const io = new IOServer(httpServer, {
       path: "/api/socket",
+      addTrailingSlash: false,
     });
 
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -100,6 +101,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         }
 
         const userLoc = { ...data, userId: socket.data.userId };
+        console.log(`User ${userId} set location:`, userLoc);
+        console.log(geolocalizationBackup);
+
         geolocalizationBackup.set(socket.id, userLoc);
         updateUserLocation(userLoc);
       });
