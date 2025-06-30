@@ -2,7 +2,11 @@ import authMiddleware from "@/features/auth/server/middleware/authMiddleware";
 import { Hono } from "hono";
 import { describeRoute } from "hono-openapi";
 import { validator as zValidator } from "hono-openapi/zod";
-import { createGroupSchema, sendMessageSchema } from "@/features/chats/schema";
+import {
+  createGroupSchema,
+  sendMessageSchema,
+  phoneNumbersSchema,
+} from "@/features/chats/schema";
 import { db } from "@/server/db";
 
 export const chatRouter = new Hono()
@@ -93,13 +97,8 @@ export const chatRouter = new Hono()
                 properties: {
                   message: { type: "string" },
                   data: {
-                    type: "object",
-                    properties: {
-                      groups: {
-                        type: "array",
-                        items: { $ref: "#/components/schemas/Group" },
-                      },
-                    },
+                    type: "array",
+                    items: { $ref: "#/components/schemas/Group" },
                   },
                 },
               },
@@ -138,8 +137,7 @@ export const chatRouter = new Hono()
 
       return c.json(
         {
-          message: "Grupos obtenidos exitosamente",
-          data: { groups },
+          data: groups,
         },
         200,
       );
@@ -242,6 +240,89 @@ export const chatRouter = new Hono()
           data: { message },
         },
         201,
+      );
+    },
+  )
+  .get(
+    "/contacts",
+    describeRoute({
+      tags: ["Chats"],
+      summary: "Obtener contactos",
+      description:
+        "Obtiene una lista de contactos a partir de los números de teléfono proporcionados.",
+      responses: {
+        200: {
+          description: "Contactos obtenidos exitosamente",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  message: { type: "string" },
+                  data: {
+                    type: "object",
+                    properties: {
+                      contacts: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            id: { type: "string" },
+                            first_name: { type: "string" },
+                            last_name: { type: "string" },
+                            email: { type: "string" },
+                            phone: { type: "string" },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        404: {
+          description: "No se encontraron contactos",
+        },
+      },
+    }),
+    authMiddleware,
+    zValidator("query", phoneNumbersSchema),
+    async (c) => {
+      const { phones } = c.req.valid("query");
+
+      const contacts = await db.user.findMany({
+        where: {
+          phone: {
+            in: phones,
+          },
+        },
+        select: {
+          id: true,
+          first_name: true,
+          last_name: true,
+          email: true,
+          phone: true,
+        },
+      });
+
+      if (contacts.length === 0) {
+        return c.json(
+          {
+            message: "No se encontraron contactos",
+            data: { contacts: [] },
+          },
+          404,
+        );
+      }
+
+      return c.json(
+        {
+          message: "Contactos obtenidos exitosamente",
+          data: contacts,
+        },
+        200,
       );
     },
   );

@@ -248,12 +248,12 @@ export const incidentsRouter = new Hono()
         });
       }
 
-      if (incident.created_at < new Date(Date.now() - 24 * 60 * 60 * 1000)) {
-        throw new HTTPException(403, {
-          message:
-            "No puedes eliminar un incidente creado hace más de 24 horas",
-        });
-      }
+      // if (incident.created_at < new Date(Date.now() - 24 * 60 * 60 * 1000)) {
+      //   throw new HTTPException(403, {
+      //     message:
+      //       "No puedes eliminar un incidente creado hace más de 24 horas",
+      //   });
+      // }
 
       if (incident.multimedia) {
         await deleteFromS3(getFileKeyFromUrl(incident.multimedia));
