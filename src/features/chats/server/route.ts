@@ -8,6 +8,10 @@ import {
   phoneNumbersSchema,
 } from "@/features/chats/schema";
 import { db } from "@/server/db";
+import {
+  emitChatGroupCreated,
+  emitChatGroupMessageSent,
+} from "@/features/events/utils/chat";
 
 export const chatRouter = new Hono()
   .post(
@@ -43,6 +47,7 @@ export const chatRouter = new Hono()
     zValidator("json", createGroupSchema),
     async (c) => {
       const { name, description, users } = c.req.valid("json");
+      const userId = c.get("user").id;
 
       const group = await db.group.create({
         data: {
@@ -50,7 +55,10 @@ export const chatRouter = new Hono()
           description,
           users: {
             createMany: {
-              data: users.map((userId) => ({ user_id: userId })),
+              data: [
+                ...users.map((userId) => ({ user_id: userId })),
+                { user_id: userId },
+              ],
             },
           },
           code: Math.random().toString(36).substring(2, 15),
@@ -71,10 +79,12 @@ export const chatRouter = new Hono()
         },
       });
 
+      emitChatGroupCreated(group);
+
       return c.json(
         {
           message: "Grupo creado exitosamente",
-          data: { group },
+          data: group,
         },
         201,
       );
@@ -177,6 +187,7 @@ export const chatRouter = new Hono()
               first_name: true,
               last_name: true,
               email: true,
+              phone: true,
             },
           },
         },
@@ -185,7 +196,7 @@ export const chatRouter = new Hono()
       return c.json(
         {
           message: "Mensajes obtenidos exitosamente",
-          data: { messages },
+          data: messages,
         },
         200,
       );
@@ -216,10 +227,34 @@ export const chatRouter = new Hono()
       const groupId = c.req.param("id");
       const { message: content } = c.req.valid("json");
 
+      const group = await db.group.findUnique({
+        where: {
+          id: groupId,
+        },
+        include: {
+          users: {
+            select: {
+              user_id: true,
+            },
+          },
+        },
+      });
+
+      if (!group) {
+        return c.json({ message: "Grupo no encontrado" }, 404);
+      }
+
+      const userId = c.get("user").id;
+      const isUserInGroup = group.users.some((user) => user.user_id === userId);
+
+      if (!isUserInGroup) {
+        return c.json({ message: "Grupo no encontrado" }, 404);
+      }
+
       const message = await db.groupMessage.create({
         data: {
           content,
-          user_id: c.get("user").id,
+          user_id: userId,
           group_id: groupId,
         },
         include: {
@@ -229,15 +264,23 @@ export const chatRouter = new Hono()
               first_name: true,
               last_name: true,
               email: true,
+              phone: true,
             },
           },
         },
       });
 
+      emitChatGroupMessageSent(
+        message,
+        group.users
+          .map((user) => user.user_id)
+          .filter((user) => user !== userId),
+      );
+
       return c.json(
         {
           message: "Mensaje enviado exitosamente",
-          data: { message },
+          data: message,
         },
         201,
       );

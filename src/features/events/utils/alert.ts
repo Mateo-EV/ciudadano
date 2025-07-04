@@ -1,6 +1,6 @@
 import type { Alert } from "@prisma/client";
 import { ALERT_EVENTS } from "../constants";
-import { emitToNearbyUsers } from "./nearby-users";
+import { emitToNearbyUsers } from "./to-users";
 
 export function emitAlertTriggered(alert: Alert) {
   emitToNearbyUsers(

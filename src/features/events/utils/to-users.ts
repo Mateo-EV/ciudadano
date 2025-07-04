@@ -14,3 +14,11 @@ export function emitToNearbyUsers<T>(
     socket?.to(socketId).emit(event, data);
   });
 }
+
+export function emitToUsers<T>(userIds: string[], event: string, data: T) {
+  userIds.forEach((userId) => {
+    const socketId = getSocketByUserId(userId);
+    if (!socketId) return;
+    socket?.to(socketId).emit(event, data);
+  });
+}
