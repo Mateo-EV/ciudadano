@@ -33,6 +33,23 @@ model User {
     contactsTo      Contacts[]       @relation("to")
     contactMessages ContactMessage[]
     alert           Alert[]
+
+    // Tokens de notificaciones push
+    pushTokens PushToken[]
+}
+
+model PushToken {
+    id         String   @id @default(cuid())
+    user_id    String
+    token      String   @unique
+    platform   String // "ios", "android", "web"
+    created_at DateTime @default(now())
+    updated_at DateTime @updatedAt
+    is_active  Boolean  @default(true)
+
+    user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+    @@index([user_id])
 }
 
 model VerificationCode {

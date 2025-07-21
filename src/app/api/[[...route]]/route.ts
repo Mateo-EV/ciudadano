@@ -7,6 +7,7 @@ import { openAPISpecs } from "hono-openapi";
 import { env } from "@/env";
 import { chatRouter } from "@/features/chats/server/route";
 import { alertsRouter } from "@/features/alerts/server/route";
+import { pushNotificationRouter } from "@/features/push-notifications/server/route";
 
 const app = new Hono().basePath("/api");
 
@@ -15,7 +16,8 @@ const routes = app
   .route("/auth", authRouter)
   .route("/incidents", incidentsRouter)
   .route("/alerts", alertsRouter)
-  .route("/chats", chatRouter);
+  .route("/chats", chatRouter)
+  .route("/push-notifications", pushNotificationRouter);
 
 app.get("/ui", swaggerUI({ url: "/api/doc" }));
 app.get(

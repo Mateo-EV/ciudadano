@@ -17,6 +17,10 @@ export const env = createEnv({
     AWS_SECRET_KEY: z.string(),
     AWS_BUCKET_NAME: z.string(),
     AWS_REGION: z.string().default("us-east-1"),
+    // Firebase Admin credentials para notificaciones push
+    FIREBASE_PROJECT_ID: z.string().optional(),
+    FIREBASE_CLIENT_EMAIL: z.string().optional(),
+    FIREBASE_PRIVATE_KEY: z.string().optional(),
   },
 
   /**
@@ -43,6 +47,9 @@ export const env = createEnv({
     AWS_SECRET_KEY: process.env.AWS_SECRET_KEY,
     AWS_BUCKET_NAME: process.env.AWS_BUCKET_NAME,
     AWS_REGION: process.env.AWS_REGION,
+    FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID,
+    FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL,
+    FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**
