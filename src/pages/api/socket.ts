@@ -97,6 +97,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       const userId = socket.data.userId;
       userSockets.set(userId, socket.id);
 
+      console.log(`User connected: ${userId} with socket ID: ${socket.id}`);
+
       socket.on("set_location", (location) => {
         const { success, data } = geolocalizationSchema.safeParse(location);
         if (!success) {
