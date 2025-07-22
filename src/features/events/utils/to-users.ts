@@ -16,8 +16,10 @@ export function emitToNearbyUsers<T>(
 }
 
 export function emitToUsers<T>(userIds: string[], event: string, data: T) {
+  console.log(data);
   userIds.forEach((userId) => {
     const socketId = getSocketByUserId(userId);
+    console.log(socketId, userId);
     if (!socketId) return;
     socket?.to(socketId).emit(event, data);
   });
