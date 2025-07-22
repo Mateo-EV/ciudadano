@@ -21,6 +21,7 @@ export function emitToUsers<T>(userIds: string[], event: string, data: T) {
     const socketId = getSocketByUserId(userId);
     console.log(socketId, userId);
     if (!socketId) return;
+    console.log(`Emitting event ${event} to user ${userId}`);
     socket?.to(socketId).emit(event, data);
   });
 }

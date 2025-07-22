@@ -1,6 +1,8 @@
 export const socket = globalThis.io;
 
 export function getSocketByUserId(userId: string) {
+  console.log(globalThis.userSockets);
+
   if (!globalThis.userSockets) {
     console.warn("userSockets is not initialized");
     return null;
