@@ -49,7 +49,7 @@ export const alertsRouter = new Hono()
               timestamp: new Date().toISOString(),
             },
           },
-          user.id, // Excluir al usuario que disparó la alerta
+          // user.id, // Excluir al usuario que disparó la alerta
         );
       } catch (error) {
         console.error("Error sending push notifications for alert:", error);

@@ -1,4 +1,4 @@
-import { messaging } from "@/lib/firebase-admin";
+import { messaging, isFirebaseInitialized } from "@/lib/firebase-admin";
 import { db } from "@/server/db";
 
 interface PushNotificationData {
@@ -150,6 +150,14 @@ export class PushNotificationService {
     notification: PushNotificationData,
   ): Promise<void> {
     try {
+      // Verificar si Firebase está inicializado
+      if (!isFirebaseInitialized()) {
+        console.warn(
+          "Firebase Admin is not initialized. Skipping push notifications.",
+        );
+        return;
+      }
+
       const message = {
         notification: {
           title: notification.title,
