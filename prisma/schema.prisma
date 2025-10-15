@@ -75,13 +75,14 @@ model PasswordResetCode {
 }
 
 model Incident {
-    id            String  @id @default(cuid())
-    user_id       String
-    incident_type String
-    description   String
-    location_lat  Float
-    location_lon  Float
-    multimedia    String?
+    id             String  @id @default(cuid())
+    user_id        String
+    incident_type  String
+    description    String
+    location_lat   Float
+    location_lon   Float
+    multimedia     String?
+    multimedia_key String
 
     created_at DateTime @default(now())
     happend_at DateTime

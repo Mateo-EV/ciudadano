@@ -37,6 +37,7 @@
     "react-dom": "^19.0.0",
     "resend": "^4.2.0",
     "socket.io": "^4.8.1",
+    "uploadthing": "^7.7.4",
     "zod": "^3.25.67",
     "zod-openapi": "^4.2.4"
   },

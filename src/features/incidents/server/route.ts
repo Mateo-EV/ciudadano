@@ -1,6 +1,5 @@
 import authMiddleware from "@/features/auth/server/middleware/authMiddleware";
 import { createIncidentSchema } from "@/features/incidents/schema";
-import { deleteFromS3, getFileKeyFromUrl, uploadToS3 } from "@/lib/aws-s3";
 import { db } from "@/server/db";
 import { Hono } from "hono";
 import { describeRoute } from "hono-openapi";
@@ -9,6 +8,10 @@ import { zValidator as zValidatorForm } from "@hono/zod-validator";
 import { HTTPException } from "hono/http-exception";
 import { geolocalizationSchema } from "@/features/geolocalization/schemas/geolocalization-schema";
 import { emitIncidentReported } from "@/features/events/utils/incidents";
+import {
+  deleteFromUploadthing,
+  uploadFileToUploadthing,
+} from "@/lib/uploadthing";
 
 export const incidentsRouter = new Hono()
   .get(
@@ -193,7 +196,7 @@ export const incidentsRouter = new Hono()
 
       const user = c.get("user");
 
-      const { url } = await uploadToS3(multimedia);
+      const { url, key } = await uploadFileToUploadthing(multimedia);
 
       const newIncident = await db.incident.create({
         data: {
@@ -204,6 +207,7 @@ export const incidentsRouter = new Hono()
           user_id: user.id,
           location_lat,
           location_lon,
+          multimedia_key: key,
         },
       });
 
@@ -256,7 +260,7 @@ export const incidentsRouter = new Hono()
       // }
 
       if (incident.multimedia) {
-        await deleteFromS3(getFileKeyFromUrl(incident.multimedia));
+        await deleteFromUploadthing(incident.multimedia_key);
       }
 
       await db.incident.delete({
